@@ -184,9 +184,9 @@ if remaining:
 
 **Note (general):**
 ```
-[1] NOTE → famiglia/elena-visual-learning.md
-    "Elena seems to learn better with visual aids — noticed she responds well to diagrams and pictures."
-    Links: [[elena-development]], [[parenting-observations]]
+[1] NOTE → family/visual-learning-notes.md
+    "Sam seems to respond well to visual learning aids — consider more diagrams and pictures."
+    Links: [[child-development]], [[parenting-observations]]
 ```
 
 **Note (media):**

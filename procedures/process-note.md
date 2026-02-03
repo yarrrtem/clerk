@@ -171,7 +171,7 @@ if item.source_path:  # From _inbox/
         item.filename = generate_filename(item.original)
 else:
     item.filename = generate_filename(item.original)
-    # kebab-case, descriptive, e.g., "elena-visual-learning.md"
+    # kebab-case, descriptive, e.g., "visual-learning-notes.md"
 ```
 
 ```
@@ -273,13 +273,13 @@ task_priority: p4
 ```markdown
 ### Item {N}
 #note #ready-to-review
-original: "Elena learns better with visual aids"
+original: "Sam responds well to visual learning"
 source: backlog
-target_area: famiglia
-destination: famiglia/
-filename: elena-visual-learning.md
-content: "Elena seems to respond well to visual learning aids. Consider incorporating more diagrams and pictures in learning activities."
-links: [elena-development.md, parenting-observations.md]
+target_area: family
+destination: family/
+filename: visual-learning-notes.md
+content: "Sam seems to respond well to visual learning aids. Consider incorporating more diagrams and pictures in learning activities."
+links: [child-development.md, parenting-observations.md]
 ```
 
 ## Edge Cases

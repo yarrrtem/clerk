@@ -26,7 +26,7 @@ Verify Todoist projects and vault folders are in sync before processing.
 #### 1.1 Load requirements
 
 ```
-required_projects = read_from("SCHEMA.md")  # e.g., [Amplemarket, Famiglia, House, ...]
+required_projects = read_from("SCHEMA.md")  # e.g., [Work, Family, Home, ...]
 ```
 
 #### 1.2 Fetch existing
@@ -137,9 +137,9 @@ Append to ACTION_LOG.md:
 ## Required Area Projects
 
 From SCHEMA.md:
-- Amplemarket
-- Famiglia
-- House
+- Work
+- Family
+- Home
 - Health
 - Admin
 - Career
@@ -150,7 +150,7 @@ From SCHEMA.md:
 
 Todoist name → Vault folder:
 - "CRM Sync" → `crm-sync`
-- "Account-based prospecting for Duo" → `account-based-prospecting-duo`
+- "Q1 Marketing Campaign" → `q1-marketing-campaign`
 - "AI Thought Leadership" → `ai-thought-leadership`
 
 ## Examples
@@ -164,19 +164,19 @@ Todoist name → Vault folder:
 
 ---
 
-**Input:** Todoist has "CRM Sync" under Amplemarket, vault missing folder
+**Input:** Todoist has "CRM Sync" under Work, vault missing folder
 
 **Output:**
 - User prompted: "These Todoist projects are missing vault folders: [CRM Sync]"
-- After approval, creates `amplemarket/projects/crm-sync/crm-sync.md`
+- After approval, creates `work/projects/crm-sync/crm-sync.md`
 
 ---
 
-**Input:** Vault has `amplemarket/projects/new-feature/`, no matching Todoist project
+**Input:** Vault has `work/projects/new-feature/`, no matching Todoist project
 
 **Output:**
 - User prompted: "These vault projects are missing from Todoist: [new-feature]"
-- After approval, creates "New Feature" sub-project under Amplemarket
+- After approval, creates "New Feature" sub-project under Work
 
 ---
 

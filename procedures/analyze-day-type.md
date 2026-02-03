@@ -85,11 +85,11 @@ day_type = analyze_day_type(today, events)
 
 if day_type["type"] in ["leave", "parental_leave", "vacation", "holiday"]:
     # Exclude work tasks
-    filter_out_area("amplemarket")
+    filter_out_area("work")
 
 elif day_type["type"] == "weekend":
     # Allow house projects, exclude work
-    filter_out_area("amplemarket")
+    filter_out_area("work")
     prioritize_area("house")
 
 elif day_type["type"] == "work_day_heavy":

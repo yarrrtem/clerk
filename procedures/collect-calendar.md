@@ -44,7 +44,7 @@ All calendars are accessed via Fastmail CalDAV. Google Calendar (work) syncs to 
 [
   {
     "calendar": "work",
-    "title": "SaaS Monday Sync",
+    "title": "Weekly Team Sync",
     "start": "2026-01-26T10:15:00-05:00",
     "end": "2026-01-26T10:30:00-05:00",
     "all_day": false,

@@ -27,7 +27,7 @@ Create a new project with synchronized Todoist and vault representation.
 
 Extract from user input:
 - `project_name`: Title Case (e.g., "CRM Sync")
-- `area`: lowercase (e.g., "amplemarket")
+- `area`: lowercase (e.g., "work")
 - `status`: optional, default "Active"
 - `description`: optional
 
@@ -41,8 +41,8 @@ Extract from user input:
 ```
 todoist_name = project_name                    # "CRM Sync"
 vault_folder = kebab-case(project_name)        # "crm-sync"
-vault_path   = {area}/projects/{vault_folder}/ # "amplemarket/projects/crm-sync/"
-vault_file   = {vault_path}{vault_folder}.md   # "amplemarket/projects/crm-sync/crm-sync.md"
+vault_path   = {area}/projects/{vault_folder}/ # "work/projects/crm-sync/"
+vault_file   = {vault_path}{vault_folder}.md   # "work/projects/crm-sync/crm-sync.md"
 ```
 
 ### 3. Check for duplicates
@@ -58,7 +58,7 @@ vault_file   = {vault_path}{vault_folder}.md   # "amplemarket/projects/crm-sync/
 ### 4. Create Todoist project
 
 ```python
-parent_id = find_todoist_project(area)  # e.g., Amplemarket's ID
+parent_id = find_todoist_project(area)  # e.g., Work's ID
 new_project = todoist.add_project(
     name=todoist_name,
     parent_id=parent_id
@@ -114,11 +114,11 @@ Created project "{project_name}" under {area}:
 
 ## Examples
 
-**Input:** "create project CRM Sync under Amplemarket"
+**Input:** "create project CRM Sync under Work"
 
 **Output:**
-- Todoist: sub-project "CRM Sync" under Amplemarket (ID: abc123)
-- Vault: `amplemarket/projects/crm-sync/crm-sync.md`
+- Todoist: sub-project "CRM Sync" under Work (ID: abc123)
+- Vault: `work/projects/crm-sync/crm-sync.md`
 - Log entry added
 
 ---

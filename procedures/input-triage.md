@@ -131,7 +131,7 @@ move_to_section(item, "Blocked")
 | Input | Classification | Key Signals |
 |-------|---------------|-------------|
 | "call the plumber about the leak" | #task | action_verb, clear_completion |
-| "Elena learns better with visual aids" | #note | observation, no_action_implied |
+| "Sam responds well to visual learning" | #note | observation, no_action_implied |
 | "mark groceries as done" | #instruction | completion_language, references_task |
 | "dentist" | #blocked | ambiguous (task or note?) |
 

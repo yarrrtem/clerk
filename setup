@@ -35,8 +35,8 @@ fi
 
 # Get vault path if not set
 if [ -z "$VAULT_PATH" ]; then
-    read -p "Vault path [~/thinkpad]: " VAULT_PATH
-    VAULT_PATH="${VAULT_PATH:-~/thinkpad}"
+    read -p "Vault path [~/vault]: " VAULT_PATH
+    VAULT_PATH="${VAULT_PATH:-~/vault}"
     VAULT_PATH="${VAULT_PATH/#\~/$HOME}"
 
     if [ ! -d "$VAULT_PATH" ]; then

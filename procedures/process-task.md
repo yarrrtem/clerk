@@ -183,5 +183,5 @@ due_string: "tomorrow"
 **Ambiguous destination:** "dentist appointment"
 → Could be Health or Admin. Apply #blocked with `blocked_on: "Which project — Health or Admin?"`
 
-**Sub-project match:** "finish the CRM sync doc for Roy"
-→ If sub-project "CRM Sync" exists under Amplemarket, route there instead of top-level Work.
+**Sub-project match:** "finish the CRM sync doc"
+→ If sub-project "CRM Sync" exists under Work, route there instead of top-level.

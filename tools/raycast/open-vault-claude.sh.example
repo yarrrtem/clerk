@@ -2,14 +2,14 @@
 
 # Required parameters:
 # @raycast.schemaVersion 1
-# @raycast.title Open Thinkpad Claude
+# @raycast.title Open Vault Claude
 # @raycast.mode silent
 
 # Optional parameters:
 # @raycast.icon 🧠
 
-SESSION_NAME="thinkpad-claude"
-THINKPAD_DIR="{{vault_path}}"
+SESSION_NAME="vault-claude"
+VAULT_DIR="{{vault_path}}"
 
 # Find and focus a tmux-controlled tab (not the control tab)
 focus_tmux_tab() {
@@ -77,7 +77,7 @@ if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
     fi
 else
     # No session - create and attach
-    tmux new-session -s "$SESSION_NAME" -d -c "$THINKPAD_DIR"
+    tmux new-session -s "$SESSION_NAME" -d -c "$VAULT_DIR"
     tmux send-keys -t "$SESSION_NAME" 'claude "process backlog"' Enter
     run_in_iterm "tmux -CC attach -t $SESSION_NAME"
 fi

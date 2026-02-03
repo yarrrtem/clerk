@@ -75,7 +75,7 @@ Present to user:
 Changes to commit:
 
  _system/procedures/new-proc.md | 50 +++
- amplemarket/bookmarks.md       | 12 +-
+ work/bookmarks.md              | 12 +-
  BACKLOG.md                     |  3 -
  3 files changed, 53 insertions(+), 12 deletions(-)
 ```

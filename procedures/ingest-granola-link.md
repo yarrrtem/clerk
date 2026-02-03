@@ -169,10 +169,10 @@ Imported "{title}" to {final_path}
 
 1. User: "https://notes.granola.ai/t/abc123"
 2. Fetch meeting: "Weekly Product Sync"
-3. Suggest: `amplemarket/2026-01-20-weekly-product-sync.md`
+3. Suggest: `work/2026-01-20-weekly-product-sync.md`
 4. User accepts
 5. File written, sync state updated
-6. "Imported 'Weekly Product Sync' to amplemarket/2026-01-20-weekly-product-sync.md"
+6. "Imported 'Weekly Product Sync' to work/2026-01-20-weekly-product-sync.md"
 
 ---
 
@@ -180,7 +180,7 @@ Imported "{title}" to {final_path}
 
 1. User: "import this meeting to the CRM project: https://notes.granola.ai/t/abc123"
 2. Fetch meeting: "CRM Integration Planning"
-3. Suggest: `amplemarket/projects/crm-sync/2026-01-20-crm-integration-planning.md`
+3. Suggest: `work/projects/crm-sync/2026-01-20-crm-integration-planning.md`
 4. User accepts
 5. File written with project context
 
@@ -189,10 +189,10 @@ Imported "{title}" to {final_path}
 **Scenario:** User overrides destination
 
 1. User: "https://notes.granola.ai/t/abc123"
-2. Fetch meeting: "Coffee Chat with Alex"
-3. Suggest: `playground/2026-01-20-coffee-chat-with-alex.md` (default)
+2. Fetch meeting: "Coffee Chat"
+3. Suggest: `playground/2026-01-20-coffee-chat.md` (default)
 4. User: "Actually put this in career/"
-5. Write to: `career/2026-01-20-coffee-chat-with-alex.md`
+5. Write to: `career/2026-01-20-coffee-chat.md`
 
 ---
 
@@ -206,7 +206,7 @@ Imported "{title}" to {final_path}
 **Scenario:** Already imported (no changes)
 
 1. User provides link for previously imported meeting
-2. Check sync state: meeting at `amplemarket/2026-01-15-product-sync.md`
+2. Check sync state: meeting at `work/2026-01-15-product-sync.md`
 3. Compare `content_updated_at` with stored `granola_edited_at`
 4. If same: "This meeting is already up to date at {path}."
 5. If user insists: proceed with re-import
@@ -216,7 +216,7 @@ Imported "{title}" to {final_path}
 **Scenario:** Already imported (with updates)
 
 1. User provides link for previously imported meeting
-2. Check sync state: meeting at `amplemarket/2026-01-15-product-sync.md`
+2. Check sync state: meeting at `work/2026-01-15-product-sync.md`
 3. Compare `content_updated_at` with stored `granola_edited_at`
 4. If newer: "Meeting updated in Granola since last import. Update local copy?"
 5. On yes: overwrite and update sync state
@@ -228,8 +228,8 @@ When determining suggested destination, look for:
 
 | Signal | Area |
 |--------|------|
-| "amplemarket", "product", "engineering", "sales" | amplemarket |
-| "family", "mom", "dad", names of family members | famiglia |
+| "product", "engineering", "sales", company keywords | work |
+| "family", "mom", "dad", names of family members | family |
 | "house", "apartment", "renovation", "contractor" | house |
 | "doctor", "gym", "therapy", "health" | health |
 | "tax", "insurance", "bank", "legal" | admin |
