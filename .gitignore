@@ -1,0 +1,19 @@
+# Virtual environments
+**/venv/
+
+# External repos (cloned by setup)
+tools/granola-mcp/repo/
+
+# Generated config
+config/paths.yaml
+.claude/settings.local.json
+.claude/mcp.json
+tools/raycast/*.sh
+
+# OS files
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

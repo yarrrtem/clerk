@@ -1,0 +1,27 @@
+#!/bin/bash
+# Setup script for granola-mcp MCP server
+#
+# Run this to create venv and install the package.
+# This script is idempotent — safe to run multiple times.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$SCRIPT_DIR/venv"
+
+echo "Setting up granola-mcp..."
+
+# Create venv if missing
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Creating venv..."
+    python3 -m venv "$VENV_DIR"
+fi
+
+# Activate and install package
+source "$VENV_DIR/bin/activate"
+
+echo "Installing granola-mcp package..."
+pip install -q -e "$SCRIPT_DIR/repo"
+
+echo "Setup complete."
+echo ""
+echo "The MCP server is configured in ~/.claude.json"
+echo "Restart Claude Code to pick up changes."

@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "todoist": {
+      "command": "npx",
+      "args": ["-y", "@doist/todoist-ai"],
+      "env": {
+        "TODOIST_API_KEY": "${TODOIST_API_KEY}"
+      }
+    },
+    "linear": {
+      "type": "http",
+      "url": "https://mcp.linear.app/mcp"
+    },
+    "granola": {
+      "command": "{{clerk_path}}/tools/granola-mcp/venv/bin/python",
+      "args": ["-m", "granola_mcp.mcp"],
+      "env": {
+        "GRANOLA_CACHE_PATH": "${HOME}/Library/Application Support/Granola/cache-v3.json"
+      }
+    },
+    "headless-browser": {
+      "command": "{{clerk_path}}/tools/headless-browser/venv/bin/python",
+      "args": [
+        "{{clerk_path}}/tools/headless-browser/server.py"
+      ]
+    }
+  }
+}

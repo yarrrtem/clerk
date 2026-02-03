@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__todoist__*",
+      "mcp__granola__search_meetings",
+      "mcp__granola__list_meetings",
+      "mcp__granola__get_meeting_notes",
+      "mcp__granola__get_recent_meetings",
+      "mcp__granola__get_meeting",
+      "mcp__headless-browser__fetch_url",
+      "WebSearch",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Edit(_state/PROCESSING.md)",
+      "Edit(BACKLOG.md)",
+      "Write(_state/PROCESSING.md)",
+      "Write(BACKLOG.md)",
+      "Write(_state/granola-sync.json)",
+      "Edit(_state/granola-sync.json)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "todoist",
+    "granola",
+    "headless-browser"
+  ]
+}

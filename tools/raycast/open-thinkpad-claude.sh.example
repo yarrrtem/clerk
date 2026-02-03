@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# Required parameters:
+# @raycast.schemaVersion 1
+# @raycast.title Open Thinkpad Claude
+# @raycast.mode silent
+
+# Optional parameters:
+# @raycast.icon 🧠
+
+SESSION_NAME="thinkpad-claude"
+THINKPAD_DIR="{{vault_path}}"
+
+# Find and focus a tmux-controlled tab (not the control tab)
+focus_tmux_tab() {
+    osascript <<'APPLESCRIPT'
+tell application "iTerm"
+    activate
+    repeat with w in windows
+        set tabIndex to 0
+        repeat with t in tabs of w
+            set tabIndex to tabIndex + 1
+            repeat with s in sessions of t
+                set sessionName to name of s
+                -- iTerm marks tmux windows with ✳, the control tab is just "tmux"
+                if sessionName starts with "✳" then
+                    select w
+                    tell w to select tab tabIndex
+                    return true
+                end if
+            end repeat
+        end repeat
+    end repeat
+    return false
+end tell
+APPLESCRIPT
+}
+
+# Ensure iTerm has a window and run command in a tab
+run_in_iterm() {
+    local cmd="$1"
+    osascript - "$cmd" <<'APPLESCRIPT'
+on run argv
+    set theCommand to item 1 of argv
+    tell application "iTerm"
+        activate
+        if (count of windows) = 0 then
+            -- No window: create one and use its initial tab
+            create window with default profile
+            tell current session of current tab of current window
+                write text theCommand
+            end tell
+        else
+            -- Window exists: create new tab
+            tell current window
+                create tab with default profile
+                tell current session of current tab
+                    write text theCommand
+                end tell
+            end tell
+        end if
+    end tell
+end run
+APPLESCRIPT
+}
+
+if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+    # Session exists - check if already attached via -CC (control mode)
+    CC_ATTACHED=$(tmux list-clients -t "$SESSION_NAME" -F "#{client_control_mode}" 2>/dev/null | grep -c "1")
+
+    if [ "$CC_ATTACHED" -gt 0 ]; then
+        # Already attached via iTerm integration - find and focus the tmux tab
+        focus_tmux_tab
+    else
+        # Session exists but no -CC client - attach with integration
+        run_in_iterm "tmux -CC attach -t $SESSION_NAME"
+    fi
+else
+    # No session - create and attach
+    tmux new-session -s "$SESSION_NAME" -d -c "$THINKPAD_DIR"
+    tmux send-keys -t "$SESSION_NAME" 'claude "process backlog"' Enter
+    run_in_iterm "tmux -CC attach -t $SESSION_NAME"
+fi

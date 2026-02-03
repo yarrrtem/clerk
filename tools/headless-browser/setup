@@ -1,0 +1,30 @@
+#!/bin/bash
+# Setup script for headless-browser MCP server
+#
+# Run this to create venv and install dependencies (including Playwright).
+# This script is idempotent — safe to run multiple times.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$SCRIPT_DIR/venv"
+
+echo "Setting up headless-browser..."
+
+# Create venv if missing
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Creating venv..."
+    python3 -m venv "$VENV_DIR"
+fi
+
+# Activate and install dependencies
+source "$VENV_DIR/bin/activate"
+
+echo "Installing Python dependencies..."
+pip install -q -r "$SCRIPT_DIR/requirements.txt"
+
+echo "Installing Playwright Chromium..."
+playwright install chromium
+
+echo "Setup complete."
+echo ""
+echo "The MCP server is configured in ~/.claude.json"
+echo "Restart Claude Code to pick up changes."

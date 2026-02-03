@@ -1,0 +1,8 @@
+# MCP Server
+mcp>=1.0.0
+
+# Headless browser
+playwright>=1.40.0
+
+# Content extraction
+trafilatura>=1.6.0

@@ -1,0 +1,172 @@
+#!/bin/bash
+# Clerk setup script
+#
+# Sets up clerk to work with a vault:
+# - Creates symlinks in vault
+# - Clones external repos
+# - Creates venvs
+# - Validates vault structure
+# - Generates settings.local.json
+
+set -e
+
+CLERK_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PATHS_FILE="$CLERK_PATH/config/paths.yaml"
+
+echo "=== Clerk Setup ==="
+echo ""
+
+# Check if already configured
+if [ -f "$PATHS_FILE" ]; then
+    VAULT_PATH=$(grep "vault_path:" "$PATHS_FILE" | cut -d' ' -f2)
+    VAULT_PATH="${VAULT_PATH/#\~/$HOME}"
+    echo "Existing configuration found:"
+    echo "  Vault: $VAULT_PATH"
+    echo "  Clerk: $CLERK_PATH"
+    echo ""
+    read -p "Reconfigure? [y/N] " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Using existing configuration."
+    else
+        VAULT_PATH=""
+    fi
+fi
+
+# Get vault path if not set
+if [ -z "$VAULT_PATH" ]; then
+    read -p "Vault path [~/thinkpad]: " VAULT_PATH
+    VAULT_PATH="${VAULT_PATH:-~/thinkpad}"
+    VAULT_PATH="${VAULT_PATH/#\~/$HOME}"
+
+    if [ ! -d "$VAULT_PATH" ]; then
+        echo "Error: Vault path does not exist: $VAULT_PATH"
+        exit 1
+    fi
+
+    # Save paths
+    echo "vault_path: $VAULT_PATH" > "$PATHS_FILE"
+    echo "clerk_path: $CLERK_PATH" >> "$PATHS_FILE"
+    echo "Saved configuration to $PATHS_FILE"
+fi
+
+echo ""
+echo "=== Creating symlinks ==="
+
+# Create .clerk symlink
+if [ -L "$VAULT_PATH/.clerk" ]; then
+    rm "$VAULT_PATH/.clerk"
+fi
+ln -s "$CLERK_PATH" "$VAULT_PATH/.clerk"
+echo "Created: $VAULT_PATH/.clerk -> $CLERK_PATH"
+
+# Create .claude symlink
+if [ -L "$VAULT_PATH/.claude" ]; then
+    rm "$VAULT_PATH/.claude"
+fi
+ln -s "$CLERK_PATH/.claude" "$VAULT_PATH/.claude"
+echo "Created: $VAULT_PATH/.claude -> $CLERK_PATH/.claude"
+
+echo ""
+echo "=== Setting up tools ==="
+
+# Clone granola-mcp if missing
+if [ ! -d "$CLERK_PATH/tools/granola-mcp/repo" ]; then
+    echo "Cloning GranolaMCP..."
+    git clone https://github.com/pedramamini/GranolaMCP.git "$CLERK_PATH/tools/granola-mcp/repo"
+fi
+
+# Setup granola-mcp venv
+if [ ! -d "$CLERK_PATH/tools/granola-mcp/venv" ]; then
+    echo "Setting up granola-mcp venv..."
+    python3 -m venv "$CLERK_PATH/tools/granola-mcp/venv"
+    source "$CLERK_PATH/tools/granola-mcp/venv/bin/activate"
+    pip install -q -e "$CLERK_PATH/tools/granola-mcp/repo"
+    deactivate
+fi
+
+# Setup headless-browser venv
+if [ ! -d "$CLERK_PATH/tools/headless-browser/venv" ]; then
+    echo "Setting up headless-browser venv..."
+    python3 -m venv "$CLERK_PATH/tools/headless-browser/venv"
+    source "$CLERK_PATH/tools/headless-browser/venv/bin/activate"
+    pip install -q -r "$CLERK_PATH/tools/headless-browser/requirements.txt"
+    playwright install chromium
+    deactivate
+fi
+
+# Setup calendar venv
+if [ ! -d "$CLERK_PATH/tools/calendar/venv" ]; then
+    echo "Setting up calendar venv..."
+    python3 -m venv "$CLERK_PATH/tools/calendar/venv"
+    source "$CLERK_PATH/tools/calendar/venv/bin/activate"
+    pip install -q -r "$CLERK_PATH/tools/calendar/requirements.txt"
+    deactivate
+fi
+
+# Setup contacts venv
+if [ ! -d "$CLERK_PATH/tools/contacts/venv" ]; then
+    echo "Setting up contacts venv..."
+    python3 -m venv "$CLERK_PATH/tools/contacts/venv"
+    source "$CLERK_PATH/tools/contacts/venv/bin/activate"
+    pip install -q -r "$CLERK_PATH/tools/contacts/requirements.txt"
+    deactivate
+fi
+
+echo ""
+echo "=== Validating vault structure ==="
+
+MISSING_FILES=""
+[ ! -f "$VAULT_PATH/SCHEMA.md" ] && MISSING_FILES="$MISSING_FILES SCHEMA.md"
+[ ! -f "$VAULT_PATH/GOALS.md" ] && MISSING_FILES="$MISSING_FILES GOALS.md"
+[ ! -f "$VAULT_PATH/ME.md" ] && MISSING_FILES="$MISSING_FILES ME.md"
+[ ! -f "$VAULT_PATH/CLAUDE.md" ] && MISSING_FILES="$MISSING_FILES CLAUDE.md"
+[ ! -d "$VAULT_PATH/_state" ] && MISSING_FILES="$MISSING_FILES _state/"
+
+if [ -n "$MISSING_FILES" ]; then
+    echo "Warning: Missing vault files:$MISSING_FILES"
+    echo ""
+    echo "Templates available in: $CLERK_PATH/config/templates/"
+    echo "Copy and customize them for your vault."
+else
+    echo "All required vault files present."
+fi
+
+echo ""
+echo "=== Generating settings.local.json ==="
+
+SETTINGS_FILE="$CLERK_PATH/.claude/settings.local.json"
+if [ ! -f "$SETTINGS_FILE" ]; then
+    cp "$CLERK_PATH/.claude/settings.local.json.example" "$SETTINGS_FILE"
+    echo "Created settings.local.json from template."
+    echo "You may want to customize permissions for your workflow."
+else
+    echo "settings.local.json already exists, skipping."
+fi
+
+echo ""
+echo "=== Generating mcp.json ==="
+
+MCP_FILE="$CLERK_PATH/.claude/mcp.json"
+sed "s|{{clerk_path}}|$CLERK_PATH|g" "$CLERK_PATH/.claude/mcp.json.example" > "$MCP_FILE"
+echo "Generated: mcp.json"
+
+echo ""
+echo "=== Generating raycast scripts ==="
+
+RAYCAST_DIR="$CLERK_PATH/tools/raycast"
+for template in "$RAYCAST_DIR"/*.example; do
+    [ -f "$template" ] || continue
+    script="${template%.example}"
+    sed "s|{{vault_path}}|$VAULT_PATH|g; s|{{clerk_path}}|$CLERK_PATH|g" "$template" > "$script"
+    chmod +x "$script"
+    echo "Generated: $(basename "$script")"
+done
+
+echo ""
+echo "=== Setup complete ==="
+echo ""
+echo "Next steps:"
+echo "1. Open Claude Code in your vault: cd $VAULT_PATH && claude"
+echo "2. Verify CLAUDE.md points to @.clerk/SYSTEM.md"
+echo "3. Try 'process backlog' to test the system"

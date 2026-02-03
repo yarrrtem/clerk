@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Required parameters:
+# @raycast.schemaVersion 1
+# @raycast.title Append to Backlog
+# @raycast.mode silent
+
+# Optional parameters:
+# @raycast.icon 📥
+# @raycast.argument1 { "type": "text", "placeholder": "Item to add" }
+
+BACKLOG_FILE="{{vault_path}}/BACKLOG.md"
+
+if [ -z "$1" ]; then
+    echo "No item provided"
+    exit 1
+fi
+
+echo -e "\n- $1" >> "$BACKLOG_FILE"
+echo "Added to BACKLOG.md"

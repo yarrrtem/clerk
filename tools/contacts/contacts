@@ -1,0 +1,30 @@
+#!/bin/bash
+# Contacts wrapper - handles venv and env vars automatically
+#
+# Usage:
+#   contacts                          # All contacts
+#   contacts --birthdays              # Only contacts with birthdays
+#   contacts --search "Adam"          # Search by name
+#   contacts --upcoming 30            # Birthdays in next 30 days
+#   contacts --list                   # List address books
+#
+# On first run, automatically creates venv and installs dependencies.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$SCRIPT_DIR/venv"
+
+# Source shell config for env vars (FASTMAIL_USERNAME, FASTMAIL_APP_PASSWORD)
+source ~/.zshrc 2>/dev/null || source ~/.bashrc 2>/dev/null
+
+# Auto-setup venv if missing
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Setting up contacts venv..." >&2
+    python3 -m venv "$VENV_DIR"
+    source "$VENV_DIR/bin/activate"
+    pip install -q -r "$SCRIPT_DIR/requirements.txt"
+    echo "Setup complete." >&2
+else
+    source "$VENV_DIR/bin/activate"
+fi
+
+python3 "$SCRIPT_DIR/fetch-contacts.py" "$@"

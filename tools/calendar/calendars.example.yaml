@@ -1,0 +1,11 @@
+# Calendar alias mappings
+# Copy to calendars.yaml and customize for your setup
+#
+# Format: alias: "Fastmail Calendar Name"
+# The alias is what you use in commands (e.g., --calendar work)
+# The value is the actual calendar name in Fastmail
+
+work: "your-work@email.com"
+personal: "Calendar"
+birthdays: "Birthdays"
+holidays: "Holidays in Canada"

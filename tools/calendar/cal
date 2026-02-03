@@ -1,0 +1,29 @@
+#!/bin/bash
+# Calendar wrapper - handles venv and env vars automatically
+#
+# Usage:
+#   cal --start today --end +7d
+#   cal --start 2026-01-26 --end 2026-02-03 --calendar personal
+#   cal --list
+#   cal --all --start today --end +7d
+#
+# On first run, automatically creates venv and installs dependencies.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$SCRIPT_DIR/venv"
+
+# Source shell config for env vars (FASTMAIL_USERNAME, FASTMAIL_APP_PASSWORD)
+source ~/.zshrc 2>/dev/null || source ~/.bashrc 2>/dev/null
+
+# Auto-setup venv if missing
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Setting up calendar venv..." >&2
+    python3 -m venv "$VENV_DIR"
+    source "$VENV_DIR/bin/activate"
+    pip install -q -r "$SCRIPT_DIR/requirements.txt"
+    echo "Setup complete." >&2
+else
+    source "$VENV_DIR/bin/activate"
+fi
+
+python3 "$SCRIPT_DIR/fetch-events.py" "$@"
