@@ -153,6 +153,27 @@ Setup generates these files (gitignored):
 - `tools/calendar/calendars.yaml` - calendar aliases
 - `tools/raycast/*.sh` - quick capture scripts
 
+## Environment variables
+
+Set these in your shell profile (`~/.zshrc` or `~/.bashrc`):
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `TODOIST_API_KEY` | Yes | Todoist API token ([get it here](https://todoist.com/app/settings/integrations/developer)) |
+| `FASTMAIL_USERNAME` | Optional | Email address (for calendar/contacts) |
+| `FASTMAIL_CALDAV_PASSWORD` | Optional | App password with CalDAV (read-only) scope |
+| `FASTMAIL_CARDDAV_PASSWORD` | Optional | App password with CardDAV (read-only) scope |
+
+Example:
+```bash
+export TODOIST_API_KEY="your-todoist-api-token"
+export FASTMAIL_USERNAME="you@fastmail.com"
+export FASTMAIL_CALDAV_PASSWORD="your-caldav-app-password"
+export FASTMAIL_CARDDAV_PASSWORD="your-carddav-app-password"
+```
+
+**Note:** Calendar and contacts use CalDAV/CardDAV protocols, which are supported by many providers (Fastmail, iCloud, Google, etc.). The variable names say "FASTMAIL" but will work with any provider — just point the calendar tool at your provider's CalDAV URL. Create read-only app passwords for security.
+
 ## License
 
 MIT
