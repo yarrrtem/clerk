@@ -53,19 +53,40 @@ fi
 echo ""
 echo "=== Creating symlinks ==="
 
-# Create .clerk symlink
-if [ -L "$VAULT_PATH/.clerk" ]; then
-    rm "$VAULT_PATH/.clerk"
+# Create .clerk symlink (skip if would be circular)
+if [ "$CLERK_PATH" = "$VAULT_PATH/.clerk" ]; then
+    echo "Skipping .clerk symlink (clerk is already at vault/.clerk)"
+elif [ -d "$VAULT_PATH/.clerk" ] && [ ! -L "$VAULT_PATH/.clerk" ]; then
+    echo "Skipping .clerk symlink (directory exists and is not a symlink)"
+else
+    if [ -L "$VAULT_PATH/.clerk" ]; then
+        rm "$VAULT_PATH/.clerk"
+    fi
+    ln -s "$CLERK_PATH" "$VAULT_PATH/.clerk"
+    echo "Created: $VAULT_PATH/.clerk -> $CLERK_PATH"
 fi
-ln -s "$CLERK_PATH" "$VAULT_PATH/.clerk"
-echo "Created: $VAULT_PATH/.clerk -> $CLERK_PATH"
 
-# Create .claude symlink
-if [ -L "$VAULT_PATH/.claude" ]; then
-    rm "$VAULT_PATH/.claude"
+# Create .claude symlink (skip if would be circular)
+if [ "$CLERK_PATH/.claude" = "$VAULT_PATH/.claude" ]; then
+    echo "Skipping .claude symlink (already at vault/.claude)"
+elif [ -d "$VAULT_PATH/.claude" ] && [ ! -L "$VAULT_PATH/.claude" ]; then
+    echo "Skipping .claude symlink (directory exists and is not a symlink)"
+else
+    if [ -L "$VAULT_PATH/.claude" ]; then
+        rm "$VAULT_PATH/.claude"
+    fi
+    ln -s "$CLERK_PATH/.claude" "$VAULT_PATH/.claude"
+    echo "Created: $VAULT_PATH/.claude -> $CLERK_PATH/.claude"
 fi
-ln -s "$CLERK_PATH/.claude" "$VAULT_PATH/.claude"
-echo "Created: $VAULT_PATH/.claude -> $CLERK_PATH/.claude"
+
+# Create .mcp.json symlink for project-level MCP config (Claude Code)
+# This is created after mcp.json is generated, but we set it up here
+# The actual file is created in the "Generating mcp.json" section below
+if [ -L "$VAULT_PATH/.mcp.json" ]; then
+    rm "$VAULT_PATH/.mcp.json"
+fi
+ln -s "$CLERK_PATH/.claude/mcp.json" "$VAULT_PATH/.mcp.json"
+echo "Created: $VAULT_PATH/.mcp.json -> $CLERK_PATH/.claude/mcp.json"
 
 echo ""
 echo "=== Setting up tools ==="
@@ -150,6 +171,33 @@ echo "=== Generating mcp.json ==="
 MCP_FILE="$CLERK_PATH/.claude/mcp.json"
 sed "s|{{clerk_path}}|$CLERK_PATH|g" "$CLERK_PATH/.claude/mcp.json.example" > "$MCP_FILE"
 echo "Generated: mcp.json"
+
+echo ""
+echo "=== Symlinking to ~/.claude ==="
+
+mkdir -p "$HOME/.claude"
+
+# Symlink mcp.json
+if [ -L "$HOME/.claude/mcp.json" ]; then
+    rm "$HOME/.claude/mcp.json"
+elif [ -f "$HOME/.claude/mcp.json" ]; then
+    echo "Warning: ~/.claude/mcp.json exists and is not a symlink, skipping"
+fi
+if [ ! -f "$HOME/.claude/mcp.json" ]; then
+    ln -s "$CLERK_PATH/.claude/mcp.json" "$HOME/.claude/mcp.json"
+    echo "Created: ~/.claude/mcp.json -> $CLERK_PATH/.claude/mcp.json"
+fi
+
+# Symlink settings.local.json
+if [ -L "$HOME/.claude/settings.local.json" ]; then
+    rm "$HOME/.claude/settings.local.json"
+elif [ -f "$HOME/.claude/settings.local.json" ]; then
+    echo "Warning: ~/.claude/settings.local.json exists and is not a symlink, skipping"
+fi
+if [ ! -f "$HOME/.claude/settings.local.json" ]; then
+    ln -s "$CLERK_PATH/.claude/settings.local.json" "$HOME/.claude/settings.local.json"
+    echo "Created: ~/.claude/settings.local.json -> $CLERK_PATH/.claude/settings.local.json"
+fi
 
 echo ""
 echo "=== Generating raycast scripts ==="

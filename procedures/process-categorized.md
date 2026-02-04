@@ -19,6 +19,22 @@ Orchestrate processing of all classified items by delegating to type-specific pr
 
 ## Procedure
 
+### 0. Load routing rules (REQUIRED)
+
+```
+Read SCHEMA.md — specifically:
+- "Note Destinations" table
+- "Note Subtypes" (Media vs Bookmark routing)
+- "Todoist Projects" mapping
+```
+
+```
+✓ Verify: SCHEMA.md routing rules are in context BEFORE processing any items
+✗ On fail: abort "Must read SCHEMA.md before routing"
+```
+
+**Why:** Routing decisions must follow documented rules, not assumptions. This step prevents guessing at destinations.
+
 ### 1. Load items
 
 ```python
