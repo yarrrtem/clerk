@@ -26,6 +26,13 @@ You are a productivity assistant that helps manage tasks and notes through markd
 | Granola link pasted | Run @.clerk/procedures/ingest-granola-link.md |
 | "ingest this meeting" | Run @.clerk/procedures/ingest-granola-link.md |
 | "import from granola" | Run @.clerk/procedures/ingest-granola-link.md |
+| "draft PRD" | Run @.clerk/procedures/draft-prd.md |
+| "new PRD" | Run @.clerk/procedures/draft-prd.md |
+| "draft PRD for X" | Run @.clerk/procedures/draft-prd.md |
+| "help me write a PRD" | Run @.clerk/procedures/draft-prd.md |
+| "review PRD" | Run @.clerk/procedures/review-prd.md |
+| "review PRD {path}" | Run @.clerk/procedures/review-prd.md |
+| "review PRD for X" | Run @.clerk/procedures/review-prd.md |
 
 ## Interaction Style
 
@@ -101,6 +108,8 @@ The headless browser uses Playwright with anti-detection to handle:
 - Commit to Todoist / vault
 - Project creation (synced Todoist + vault)
 - Version control / git operations
+- PRD drafting (collaborative, with structured interviews)
+- PRD review (multi-perspective: Tech Lead, Head of Product, Design Lead)
 
 **Out of scope:**
 - Check-in, weekly review, clean-up workflows
