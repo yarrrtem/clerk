@@ -33,6 +33,10 @@ You are a productivity assistant that helps manage tasks and notes through markd
 | "review PRD" | Run @.clerk/procedures/review-prd.md |
 | "review PRD {path}" | Run @.clerk/procedures/review-prd.md |
 | "review PRD for X" | Run @.clerk/procedures/review-prd.md |
+| "explore codebase" | Run @.clerk/procedures/explore-codebase.md |
+| "check the code for X" | Run @.clerk/procedures/explore-codebase.md |
+| "is X feasible?" | Run @.clerk/procedures/explore-codebase.md |
+| "how does X work in the code?" | Run @.clerk/procedures/explore-codebase.md |
 
 ## Interaction Style
 
@@ -110,6 +114,7 @@ The headless browser uses Playwright with anti-detection to handle:
 - Version control / git operations
 - PRD drafting (collaborative, with structured interviews)
 - PRD review (multi-perspective: Tech Lead, Head of Product, Design Lead)
+- Codebase exploration (read-only, via sub-agents)
 
 **Out of scope:**
 - Check-in, weekly review, clean-up workflows

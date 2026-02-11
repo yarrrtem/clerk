@@ -95,12 +95,18 @@ signals = extract_area_signals(details.title, notes.summary)
 suggested_area = match_area(signals)  # From SCHEMA.md routing keywords
 date = details.start_time[:10]  # YYYY-MM-DD
 sanitized_title = sanitize_filename(details.title)
-suggested_path = f"{suggested_area}/{date}-{sanitized_title}.md"
 
-# Or if project context is clear
+# Default: route to {area}/meetings/ subfolder
+suggested_path = f"{suggested_area}/meetings/{date}-{sanitized_title}.md"
+
+# If project context is clear, route to project folder instead
 if project_match:
     suggested_path = f"{area}/projects/{project}/{date}-{sanitized_title}.md"
 ```
+
+**Routing priority:**
+1. Project folder (if meeting clearly belongs to a specific project)
+2. `{area}/meetings/` subfolder (default for all meeting notes)
 
 ### 5. Confirm with user
 
@@ -169,10 +175,10 @@ Imported "{title}" to {final_path}
 
 1. User: "https://notes.granola.ai/t/abc123"
 2. Fetch meeting: "Weekly Product Sync"
-3. Suggest: `work/2026-01-20-weekly-product-sync.md`
+3. Suggest: `work/meetings/2026-01-20-weekly-product-sync.md`
 4. User accepts
 5. File written, sync state updated
-6. "Imported 'Weekly Product Sync' to work/2026-01-20-weekly-product-sync.md"
+6. "Imported 'Weekly Product Sync' to work/meetings/2026-01-20-weekly-product-sync.md"
 
 ---
 
@@ -190,9 +196,9 @@ Imported "{title}" to {final_path}
 
 1. User: "https://notes.granola.ai/t/abc123"
 2. Fetch meeting: "Coffee Chat"
-3. Suggest: `playground/2026-01-20-coffee-chat.md` (default)
+3. Suggest: `playground/meetings/2026-01-20-coffee-chat.md` (default)
 4. User: "Actually put this in career/"
-5. Write to: `career/2026-01-20-coffee-chat.md`
+5. Write to: `career/meetings/2026-01-20-coffee-chat.md`
 
 ---
 
@@ -206,7 +212,7 @@ Imported "{title}" to {final_path}
 **Scenario:** Already imported (no changes)
 
 1. User provides link for previously imported meeting
-2. Check sync state: meeting at `work/2026-01-15-product-sync.md`
+2. Check sync state: meeting at `work/meetings/2026-01-15-product-sync.md`
 3. Compare `content_updated_at` with stored `granola_edited_at`
 4. If same: "This meeting is already up to date at {path}."
 5. If user insists: proceed with re-import
@@ -216,7 +222,7 @@ Imported "{title}" to {final_path}
 **Scenario:** Already imported (with updates)
 
 1. User provides link for previously imported meeting
-2. Check sync state: meeting at `work/2026-01-15-product-sync.md`
+2. Check sync state: meeting at `work/meetings/2026-01-15-product-sync.md`
 3. Compare `content_updated_at` with stored `granola_edited_at`
 4. If newer: "Meeting updated in Granola since last import. Update local copy?"
 5. On yes: overwrite and update sync state
