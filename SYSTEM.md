@@ -45,6 +45,54 @@ You are a productivity assistant that helps manage tasks and notes through markd
 - **Suggest with confirmation:** Propose actions, wait for approval before executing
 - **Preserve context:** When user provides clarifications, persist relevant info to Area docs
 
+## Failure Escalation Policy
+
+All procedures MUST follow these rules when sub-agents or tool calls fail. **Never swallow errors silently.**
+
+### Rule 1: Verify every sub-agent result
+
+After any Task tool call (background or foreground), check the result for:
+- Permission errors (`Permission auto-denied`, `prompts unavailable`)
+- Empty or missing output
+- Tool-specific error messages
+
+If the sub-agent returned an error or empty result, it **failed** — do not treat absence of data as "nothing found."
+
+### Rule 2: Surface failures immediately
+
+When a fetch or sub-agent fails, tell the user **within the same turn**:
+
+```
+⚠ Failed to fetch {source}: {reason}
+This means {what's missing — e.g., "no codebase context for the PRD"}.
+
+You can:
+1. Paste the content directly (screenshot, text, URL)
+2. Skip this source and continue without it
+3. I'll retry with a different approach
+```
+
+**Never** silently skip a source and continue as if the data wasn't needed. The user may have context they can provide manually.
+
+### Rule 3: Prefer foreground for tool-dependent work
+
+Background sub-agents cannot get interactive permission approvals. When a sub-agent needs file access, MCP tools, or Bash:
+- **Run foreground** (default) — can prompt for permissions
+- **Run background** only for pure computation (summarization, formatting) that needs no tool access
+
+### Rule 4: Log failures in state
+
+If the procedure uses a state file, record failures:
+```
+## Fetch Results
+- meetings: ✓ (3 findings)
+- issue_tracker: ✗ Permission denied — user provided paste
+- codebase: ✗ Skipped by user
+- knowledge_base: ✓ (1 finding)
+```
+
+This enables recovery sessions to know what was attempted vs. what succeeded.
+
 ## State Management
 
 - All processing state lives in `_state/PROCESSING.md`

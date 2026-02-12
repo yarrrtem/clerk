@@ -25,6 +25,7 @@ Enrich a #note item with metadata for vault commit.
 
 | Type | Signals | Destination |
 |------|---------|-------------|
+| Meeting | source is `granola`, has meeting_title/date | `{area}/meetings/{date}-{title}.md` |
 | Media | Book title, movie, TV show, "by [author]" | `{area}/books-and-movies.md` |
 | Bookmark | URL to article, video, thread | `{area}/bookmarks.md` |
 | General | Observations, thoughts, context | `{area}/` or project folder |
@@ -76,6 +77,31 @@ if not target_area:
 ```
 
 ### 3. Detect note type and route
+
+#### 3m. Meeting Note Detection (Granola)
+
+```python
+if item.source == "granola":
+    date = item.meeting_date  # YYYY-MM-DD
+    sanitized_title = sanitize_filename(item.meeting_title)
+
+    # Default: meetings subfolder
+    item.destination = f"{target_area}/meetings/{date}-{sanitized_title}.md"
+
+    # Override: if project context is clear, use project folder
+    if project_match:
+        item.destination = f"{target_area}/projects/{project}/{date}-{sanitized_title}.md"
+
+    # Content is built from Granola notes (via get_meeting_notes)
+    item.filename = f"{date}-{sanitized_title}.md"
+
+    goto step_8  # Skip to transition
+```
+
+```
+✓ Verify: destination uses meetings/ subfolder or project folder
+✗ On fail: default to {area}/meetings/
+```
 
 #### 3a. Media Detection (Books/Movies/TV)
 
@@ -217,6 +243,20 @@ move_to_section(item, "Ready for Review")
 ```
 
 ## Entry Formats (After Processing)
+
+**Meeting note (Granola):**
+```markdown
+### Item {N}
+#note #ready-to-review
+original: "Weekly Product Sync"
+source: granola
+source_id: abc123
+meeting_title: "Weekly Product Sync"
+meeting_date: 2026-02-10
+target_area: amplemarket
+destination: amplemarket/meetings/2026-02-10-weekly-product-sync.md
+content: Meeting notes (full Granola notes)
+```
 
 **Media note:**
 ```markdown

@@ -58,8 +58,26 @@ Pull context from available tools (per `{area}/_config.md`). Compress each into 
 - [ ] **knowledge_base** — search for project keywords
 - [ ] **feedback_board** — search for similar user requests
 - [ ] Area folder → related files via Glob/Grep (always available)
-- [ ] **codebase** — explore via sub-agent if available
+- [ ] **codebase** — explore via sub-agent if available (**foreground only** — needs file permissions)
 - [ ] **web** — fetch external URLs if referenced
+
+**After each fetch, verify the result** (see SYSTEM.md § Failure Escalation Policy):
+
+```
+for each source attempted:
+    if result is error, empty, or permission-denied:
+        log: ✗ {role}: {error reason}
+        tell user immediately — offer paste/skip/retry
+    else:
+        log: ✓ {role}: {N findings}
+        compress into digest
+
+Present fetch summary before proceeding to Map phase:
+    "Gathered context from {N} sources. {M} failed:"
+    - {failed source}: {reason} — paste content or skip?
+
+Do NOT proceed to Map until user has seen and resolved all failures.
+```
 
 **Output:** Context digest in state file (~2-10K tokens depending on mode). Keep source pointers, not full content.
 

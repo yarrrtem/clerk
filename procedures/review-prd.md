@@ -110,11 +110,22 @@ If auto-triggered from `draft-prd.md` Phase 4, inherit the mode from the draft �
 > Examples: {examples — include only if pre-scan shows low structural confidence, or if deep mode}
 > Coverage map: {section_coverage_map}
 
-Launch reviewers in parallel via Task tool.
+Launch reviewers **foreground** via Task tool (sub-agents need file/tool access).
 
 ```
-✓ Verify: at least 1 review returned
-✗ On fail: retry failed reviewer once, then continue without
+for each reviewer result:
+    if error, empty, or permission-denied:
+        retry once (foreground)
+        if still failed:
+            log: ✗ {reviewer}: {error reason}
+            tell user: "⚠ {Reviewer} failed: {reason}. Continue with {N} remaining reviews, or retry?"
+    else:
+        log: ✓ {reviewer}: complete
+        verify YAML block present at end of response
+        if no YAML block: flag as partial, extract what's usable
+
+✓ Verify: at least 1 review with valid YAML returned
+✗ All failed: stop, tell user, suggest running reviewers one at a time
 ```
 
 ### 3. Synthesize

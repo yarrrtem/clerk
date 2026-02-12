@@ -76,15 +76,29 @@ During review, untagged claims are flagged as potential gaps.
 
 Tools are configured per area in `{area}/_config.md` (§ Tools). At runtime, check which configured tools are actually online.
 
+Also see: SYSTEM.md § Failure Escalation Policy (applies to all tool calls and sub-agents).
+
 ```
 1. Load {area}/_config.md → parse tool role mappings
    If no _config.md exists → discover tools dynamically, no area-specific hints
 2. For each configured role, probe the MCP tool
    online → available for context gathering
-   offline → skip gracefully, log "Skipped {role}: {tool} not available"
-3. Never block the workflow on a missing tool
-4. Model unavailable → fall back to next available (opus → sonnet → haiku)
+   offline → log "Unavailable: {role} ({tool})"
+3. Report availability summary to user before gathering:
+   "Tools available: {list}. Unavailable: {list}."
+4. Never block the workflow on a missing tool
+5. Model unavailable → fall back to next available (opus → sonnet → haiku)
 ```
+
+**Failure logging in state files:**
+```
+## Fetch Results
+- {role}: ✓ ({N} findings)
+- {role}: ✗ {reason} — user provided paste | skipped | retried
+- {role}: ⊘ unavailable (not probed)
+```
+
+**Critical rule:** A failed fetch is NOT the same as "no results found." Failed means the data might exist but we couldn't get it. Always tell the user so they can provide it manually.
 
 ## Confidence Scoring
 

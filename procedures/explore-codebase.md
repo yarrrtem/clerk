@@ -41,7 +41,9 @@ Explore a codebase to answer questions, check feasibility, trace flows, or surve
    → Use directly, skip config lookup
 
 2. Area config: {area}/_config.md → extract codebase key from Tools table
-   → Resolve key via paths.yaml codebases section → absolute path
+   ⚠️ The Tool column contains a SYMBOLIC KEY (e.g., "ampledash"), NOT a path.
+   Never use this value as a filesystem path directly.
+   → Resolve key via paths.yaml codebases → {key} → path field → absolute path
 
 3. Global fallback: paths.yaml codebases section has only one entry
    → Use it (with confirmation: "Using codebase '{name}' — correct?")
@@ -51,9 +53,19 @@ Explore a codebase to answer questions, check feasibility, trace flows, or surve
 
 After resolution, verify path exists on disk. If missing → abort with device-not-available message.
 
-### 1. Freshness Report
+**Bind resolved values for prompt assembly (§3):**
+```
+resolved_path = <absolute path from paths.yaml>    # e.g., /Users/artem/code/ampledash
+codebase_name = <key from _config.md or paths.yaml> # e.g., "ampledash"
+main_branch   = <from paths.yaml, default: master>
+```
+These literal values are substituted into the sub-agent prompt at §3. The `{absolute_path}` placeholder in the prompt MUST be the resolved filesystem path, never the symbolic key.
 
-Report codebase state. **Read-only by default — never mutate the repo automatically.**
+### 1. Freshness Check
+
+Ensure the codebase is current **before** exploration begins. Never explore stale code by default — the whole point is accurate answers.
+
+**Never mutate the repo silently.** Always report state and get approval. But recommend pulling when stale.
 
 ```
 1. cd {codebase_path}
@@ -61,20 +73,26 @@ Report codebase state. **Read-only by default — never mutate the repo automati
 3. Read main_branch from paths.yaml (default: master)
 4. Check: git log -1 --format="%cr" → age of last commit
 
-Report to user:
-    "Codebase: {name} on `{branch}` (last commit: {age ago})"
-
-If NOT on main branch:
-    → Note: "On branch `{branch}`, not `{main_branch}`. Exploring current state."
-    → Offer: "Switch to {main_branch} and pull first? [y/N]"
+If on main branch and last commit ≤ 1 day old:
+    → Report: "Codebase: {name} on `{main_branch}` (last commit: {age ago}). Looks fresh."
+    → Proceed to §2.
 
 If on main branch and last commit > 1 day old:
-    → Note: "Last pull may be stale ({age})."
-    → Offer: "Pull latest? [y/N]"
+    → Report: "Codebase: {name} on `{main_branch}` but last commit was {age ago}."
+    → Recommend: "Pull latest before exploring? [Y/n]" (default: YES)
+    → If approved: git pull, then proceed
+    → If declined: proceed with note "⚠️ Exploring potentially stale code"
 
-Default is always: explore current state as-is.
-Only pull or switch branches on explicit user approval.
+If on a feature branch:
+    → Report: "Codebase is on branch `{branch}`, not `{main_branch}`."
+    → Ask: "Switch to {main_branch} and pull? Or explore current branch?"
+    → No default — user must choose explicitly.
+
+If git pull fails (network, merge conflict):
+    → Report error, continue with current state, note: "⚠️ Pull failed, using local copy"
 ```
+
+**Key principle:** Freshness check and pull happen BEFORE exploration, never after. Don't explore first and then discover the data was stale.
 
 ### 2. Determine Focus
 
@@ -147,18 +165,35 @@ Your output should be ~{budget} tokens of structured findings.
 
 ### 4. Launch Exploration
 
-**Single-agent (for `question` and `trace`):**
-Launch one Task sub-agent. Sufficient for targeted questions where the answer lives in a known area of the code.
+**Critical pre-launch checks:**
+1. All `{placeholders}` in the prompt from §3 are resolved to literal values
+2. `{absolute_path}` contains the filesystem path (e.g., `/Users/artem/code/ampledash`), NOT the symbolic key
+3. Model is set to `opus` (see § Platform Notes)
 
-**Multi-agent (for `feasibility` and `survey`, or when scope is clearly broad):**
-Launch one Task sub-agent as a **coordinator**. The coordinator prompt includes:
-*"This is a large codebase. Break the exploration into parallel sub-agents for different layers (e.g., model, API, frontend, permissions) and synthesize their findings."*
+**Claude Code invocation — single-agent (for `question` and `trace`):**
+```
+Task tool:
+  subagent_type: "general-purpose"
+  model: "opus"
+  prompt: <fully assembled prompt from §3, all placeholders resolved to literals>
+```
+
+**Claude Code invocation — multi-agent coordinator (for `feasibility` and `survey`):**
+```
+Task tool:
+  subagent_type: "general-purpose"
+  model: "opus"
+  prompt: <coordinator prompt — includes: "This is a large codebase. Break the
+    exploration into parallel sub-agents for different layers (e.g., model, API,
+    frontend, permissions) and synthesize their findings.">
+```
 
 The coordinator spawns its own sub-agents, each focused on a different concern, then synthesizes.
 
 ```
 ✓ Verify: sub-agent returned structured output
-✗ On timeout/fail: retry once, then return partial results with note
+✗ On fail: retry once with same model, then return partial results with note
+✗ Never fall back to haiku for retry — codebase exploration requires strong reasoning
 ```
 
 ### 5. Process Results
@@ -281,8 +316,15 @@ No state file needed. Exploration is stateless — if interrupted, re-run. Resul
 
 ## Platform Notes
 
-**Claude Code:** Sub-agents via Task tool with file search, content search, and file read access. Sub-agents can nest (coordinator → parallel explorers). Codebase path passed as absolute path. Fully automated.
+### Claude Code
+- Sub-agents via Task tool with `model` parameter
+- **Model: always use `model: "opus"` for codebase exploration** — never haiku
+- Fallback chain: opus → sonnet (never haiku — codebase exploration requires strong reasoning to navigate large codebases, follow call chains, and synthesize findings)
+- Sub-agents can nest (coordinator → parallel explorers)
+- Codebase path passed as absolute path — Claude Code can access any directory on the filesystem
 
-**Cursor:** Add the codebase as a second workspace folder for best results — Cursor indexes both directories natively with full depth. Alternatively, use the sub-agent prompt as a self-contained handoff: open a separate Cursor window on the codebase, paste the prompt, get findings, bring them back.
+### Cursor
+Add the codebase as a second workspace folder for best results — Cursor indexes both directories natively with full depth. Alternatively, use the sub-agent prompt as a self-contained handoff: open a separate Cursor window on the codebase, paste the prompt, get findings, bring them back.
 
-**Any LLM with file access:** The sub-agent prompt is fully self-contained. Give the model file access to the codebase path and the prompt works.
+### Any LLM with file access
+The sub-agent prompt is fully self-contained. Give the model file access to the codebase path and the prompt works.
