@@ -41,6 +41,20 @@ You are a productivity assistant that helps manage tasks and notes through markd
 | "triage featurebase" | Run @.clerk/procedures/moderate-featurebase.md |
 | "moderate this post" | Run @.clerk/procedures/moderate-featurebase.md |
 | "moderate post {id}" | Run @.clerk/procedures/moderate-featurebase.md |
+| "create ticket" | Run @.clerk/procedures/create-linear-ticket.md |
+| "create linear ticket" | Run @.clerk/procedures/create-linear-ticket.md |
+| "file a ticket for X" | Run @.clerk/procedures/create-linear-ticket.md |
+| "ticket: X" | Run @.clerk/procedures/create-linear-ticket.md |
+| "new ticket" | Run @.clerk/procedures/create-linear-ticket.md |
+| "log a bug for X" | Run @.clerk/procedures/create-linear-ticket.md |
+| "draft slack message" | Run @.clerk/procedures/draft-slack-message.md |
+| "write a slack message to X" | Run @.clerk/procedures/draft-slack-message.md |
+| "message X on slack" | Run @.clerk/procedures/draft-slack-message.md |
+| "draft message for #channel" | Run @.clerk/procedures/draft-slack-message.md |
+| "draft launch message" | Run @.clerk/procedures/draft-launch-message.md |
+| "write a launch announcement" | Run @.clerk/procedures/draft-launch-message.md |
+| "announce X in product launches" | Run @.clerk/procedures/draft-launch-message.md |
+| "product launch for X" | Run @.clerk/procedures/draft-launch-message.md |
 
 ## Interaction Style
 
