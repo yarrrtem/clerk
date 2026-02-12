@@ -23,6 +23,22 @@
       "args": [
         "{{clerk_path}}/tools/headless-browser/server.py"
       ]
+    },
+    "featurebase": {
+      "command": "featurebase-mcp",
+      "env": {
+        "FEATUREBASE_API_KEY": "${FEATUREBASE_API_KEY}",
+        "FEATUREBASE_ORG_URL": "${FEATUREBASE_ORG_URL}"
+      }
+    },
+    "amplemarket-kb": {
+      "command": "node",
+      "args": [
+        "{{clerk_path}}/tools/pylon-mcp/dist/src/index.js"
+      ],
+      "env": {
+        "PYLON_API_TOKEN": "${PYLON_API_TOKEN}"
+      }
     }
   }
 }

@@ -166,6 +166,26 @@ else
 fi
 
 echo ""
+echo "=== Checking required environment variables ==="
+
+MISSING_VARS=""
+[ -z "$TODOIST_API_KEY" ] && MISSING_VARS="$MISSING_VARS TODOIST_API_KEY"
+[ -z "$FEATUREBASE_API_KEY" ] && MISSING_VARS="$MISSING_VARS FEATUREBASE_API_KEY"
+[ -z "$FEATUREBASE_ORG_URL" ] && MISSING_VARS="$MISSING_VARS FEATUREBASE_ORG_URL"
+[ -z "$PYLON_API_TOKEN" ] && MISSING_VARS="$MISSING_VARS PYLON_API_TOKEN"
+[ -z "$FASTMAIL_USERNAME" ] && MISSING_VARS="$MISSING_VARS FASTMAIL_USERNAME"
+[ -z "$FASTMAIL_APP_PASSWORD" ] && MISSING_VARS="$MISSING_VARS FASTMAIL_APP_PASSWORD"
+[ -z "$FASTMAIL_CALDAV_PASSWORD" ] && [ -z "$FASTMAIL_APP_PASSWORD" ] && MISSING_VARS="$MISSING_VARS FASTMAIL_CALDAV_PASSWORD"
+[ -z "$FASTMAIL_CARDDAV_PASSWORD" ] && [ -z "$FASTMAIL_APP_PASSWORD" ] && MISSING_VARS="$MISSING_VARS FASTMAIL_CARDDAV_PASSWORD"
+
+if [ -n "$MISSING_VARS" ]; then
+    echo "Warning: Missing environment variables:$MISSING_VARS"
+    echo "MCP servers that depend on these will not work."
+    echo "Add them to ~/.zshrc and re-run setup."
+    echo ""
+fi
+
+echo ""
 echo "=== Generating mcp.json ==="
 
 MCP_FILE="$CLERK_PATH/.claude/mcp.json"
