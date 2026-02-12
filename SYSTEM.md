@@ -37,6 +37,10 @@ You are a productivity assistant that helps manage tasks and notes through markd
 | "check the code for X" | Run @.clerk/procedures/explore-codebase.md |
 | "is X feasible?" | Run @.clerk/procedures/explore-codebase.md |
 | "how does X work in the code?" | Run @.clerk/procedures/explore-codebase.md |
+| "moderate featurebase" | Run @.clerk/procedures/moderate-featurebase.md |
+| "triage featurebase" | Run @.clerk/procedures/moderate-featurebase.md |
+| "moderate this post" | Run @.clerk/procedures/moderate-featurebase.md |
+| "moderate post {id}" | Run @.clerk/procedures/moderate-featurebase.md |
 
 ## Interaction Style
 
@@ -135,6 +139,19 @@ Tools live in `.clerk/tools/`. **venvs are not synced** — they're recreated on
 
 If a script fails with import errors, run `.clerk/setup`.
 
+## Image Hygiene
+
+When encountering images in the vault with generic names (e.g., `Pasted image 20260211165132.png`, `img_1234.jpg`, `Screenshot 2026-...`, `image.png`):
+
+1. **Rename** to date-first descriptive name: `{YYYY-MM-DD}-{context}-{description}.{ext}`
+   - Example: `Pasted image 20260211165132.png` → `2026-02-11-duo-advisor-streamlit-architecture.png`
+   - Derive context from the referencing file/project
+   - Keep the date from the original filename if available
+2. **Update all references** — search the vault for `![[old-name]]` and replace with `![[new-name]]`
+3. **Extract inline base64 images** — if a markdown file contains `![](data:image/...;base64,...)`, extract to `_attachments/` as a named PNG and replace with an Obsidian `![[...]]` reference
+
+Images live in `_attachments/` at the vault root.
+
 ## URL Fetching
 
 When processing bookmarks or any URL content:
@@ -163,6 +180,7 @@ The headless browser uses Playwright with anti-detection to handle:
 - PRD drafting (collaborative, with structured interviews)
 - PRD review (multi-perspective: Tech Lead, Head of Product, Design Lead)
 - Codebase exploration (read-only, via sub-agents)
+- Featurebase moderation (rewrite, dedup, tag, approve/reject)
 
 **Out of scope:**
 - Check-in, weekly review, clean-up workflows
