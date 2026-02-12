@@ -25,7 +25,8 @@
       ]
     },
     "featurebase": {
-      "command": "featurebase-mcp",
+      "command": "npx",
+      "args": ["-y", "@gkpacker/featurebase-mcp"],
       "env": {
         "FEATUREBASE_API_KEY": "${FEATUREBASE_API_KEY}",
         "FEATUREBASE_ORG_URL": "${FEATUREBASE_ORG_URL}"
