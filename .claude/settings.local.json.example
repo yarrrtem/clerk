@@ -23,7 +23,10 @@
       "Write(_state/PROCESSING.md)",
       "Write(BACKLOG.md)",
       "Write(_state/granola-sync.json)",
-      "Edit(_state/granola-sync.json)"
+      "Edit(_state/granola-sync.json)",
+      "Bash(git pull:*)",
+      "Bash(git log:*)",
+      "Bash(git rev-parse:*)"
     ]
   },
   "enabledMcpjsonServers": [

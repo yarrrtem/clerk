@@ -163,12 +163,46 @@ that helps the sub-agent understand what to look for.}
 Your output should be ~{budget} tokens of structured findings.
 ```
 
-### 4. Launch Exploration
+### 4. Check Codebase Permissions
+
+Before launching the sub-agent, verify that read permissions exist for the resolved codebase path. Sub-agents (especially background ones) will silently fail if permissions aren't pre-approved.
+
+**Check method:** Read the settings file at `{clerk_path}/.claude/settings.local.json` (resolve `clerk_path` from paths.yaml). Look for `Read({resolved_path}/` in the `permissions.allow` array.
+
+```
+1. Read {clerk_path}/.claude/settings.local.json
+2. Parse JSON, check permissions.allow array
+3. Search for any entry containing "Read({resolved_path}/"
+
+If found → permissions_ok = true
+If not found → permissions_ok = false
+```
+
+**If permissions_ok = false:**
+```
+Report to user:
+  "Codebase read permissions not configured for {resolved_path}.
+   Running exploration in foreground (interactive mode).
+   After this run, I can add permissions so future explorations work in background."
+
+→ Force foreground execution (never run_in_background)
+→ After successful exploration, offer:
+  "Add read permissions for {resolved_path} to settings.local.json?
+   This allows future explorations to run as background agents. [Y/n]"
+→ If approved: use Python to inject Read/Grep/Glob/Bash(git) permissions
+  (same logic as setup script — see clerk/setup for the Python snippet)
+```
+
+**If permissions_ok = true:**
+→ Proceed normally (foreground or background as appropriate)
+
+### 5. Launch Exploration
 
 **Critical pre-launch checks:**
 1. All `{placeholders}` in the prompt from §3 are resolved to literal values
 2. `{absolute_path}` contains the filesystem path (e.g., `/Users/artem/code/ampledash`), NOT the symbolic key
 3. Model is set to `opus` (see § Platform Notes)
+4. If permissions_ok = false → set `run_in_background: false` (foreground only)
 
 **Claude Code invocation — single-agent (for `question` and `trace`):**
 ```
@@ -196,7 +230,7 @@ The coordinator spawns its own sub-agents, each focused on a different concern, 
 ✗ Never fall back to haiku for retry — codebase exploration requires strong reasoning
 ```
 
-### 5. Process Results
+### 6. Process Results
 
 **If called directly by user:**
 - Present findings as-is in the focus-appropriate format
@@ -208,7 +242,7 @@ The coordinator spawns its own sub-agents, each focused on a different concern, 
 - Respect the calling procedure's context budget
 - Return compressed digest for inclusion in state file
 
-### 6. Log
+### 7. Log
 
 ```
 append ACTION_LOG.md:

@@ -94,38 +94,33 @@ Present summary:
 On confirmation → write queue to _state/fb-moderation.md
 ```
 
-### 3. Process Each Post (one at a time)
+### 3. Prepare Posts (autonomous — batch mode)
 
-For each post in `mine`, run 3a–3e, then immediately present for review.
+In batch mode, prepare all posts autonomously before presenting any for review. This lets the user work through prepared cards quickly without waiting for tool calls.
 
-**First:** Fetch the full post via `get_post(id=post.id)` — this gets the complete content for rewriting. Only fetch one post at a time.
+**Single mode** skips this step — go straight to Step 4 (Process Single Post).
 
-#### 3a. Gather Context
+For each post in `mine` (up to 10):
 
-Fetch from available tools (per `_config.md` tool roles). Run in parallel where possible. **Foreground only.**
+#### 3a. Fetch & Gather Context
 
 ```
-knowledge_base → search KB for keywords from post title
-issue_tracker → search Linear for related issues
-(skip codebase in batch — offer per-post if user asks)
+get_post(id=post.id) → full content
 
-verify each result (Failure Escalation Policy):
-    if error → log ✗, surface to user, offer paste/skip/retry
-    if success → log ✓, compress into digest
+In parallel:
+  knowledge_base → search KB for keywords from post title
+  issue_tracker → search Linear for related issues
+  (skip codebase — offer per-post during review if user asks)
+
+If a source fails → log ✗ in prepared card, continue with what's available
 ```
 
-#### 3b. Triage & Split
+#### 3b. Triage
 
-**Split detection:** If the post describes multiple distinct, unrelated requests:
-1. Identify each distinct request
-2. Present to user: "This post contains {N} separate requests. Split into individual posts?"
-3. If approved: create new posts for each (with user confirmation per write), update original
-4. Track splits in `_state/fb-moderation.md` for idempotency
-5. Process each resulting post separately
-
-**Surface classification:**
-- Classify using config keywords + gathered context
-- If unclear → ask user: "Which surface does this belong to? {options}"
+- If post describes multiple distinct requests → flag as `needs-split` (user decides during review)
+- If post is a bug report → flag as `bug-report`
+- If post is too vague → flag as `needs-pm-input`
+- Classify surface using config keywords + gathered context
 
 #### 3c. Rewrite
 
@@ -143,35 +138,71 @@ Generate the rewritten post using the template from `_config.md`:
 - **User Voice** — verbatim quote from original post. Preserve the customer's words.
 
 **Edge cases:**
-- Post too vague → flag as `needs-pm-input`, present original + ask user
+- Post too vague → flag as `needs-pm-input`, preserve original
 - Post is a bug report → note this, suggest different handling
 - Post is well-written already → propose minimal edits, don't over-rewrite
 
 #### 3d. Detect Duplicates
 
-Use v2 API search + LLM judgment:
-
 ```
 1. Extract 1-2 keyword queries from rewritten post title
-   Example: "Filter Analytics by Active Sequences"
-   → queries: ["analytics filter sequence", "sequence analytics"]
-
 2. For each query: list_posts(q="...", limit=10)
-   - v2 API does server-side search on title + content
-
-3. Score each result against rewritten post:
-   - exact: Same core request → recommend merge
-   - related: Overlapping scope → note as related
-   - distinct: Different request → skip
-
-4. For merge candidates, identify canonical:
-   - Most upvotes wins
-   - If tied, oldest wins
+3. Score matches: exact (merge) / related (note) / distinct (skip)
+4. Canonical = most upvotes, or oldest if tied
 ```
 
-#### 3e. Present Result
+#### 3e. Write to State
 
-Present a compact review card. No code blocks, no raw HTML. Titles as headings outside blockquotes. Separate blockquotes for Current/Desired/Voice with blank lines between them. Rich context with linked Linear issues.
+After preparing each post, append to `_state/fb-moderation.md`:
+
+```markdown
+---
+### Post {N}/{total}: {original title}
+**ID:** {id}
+**Author:** {author name} | **Upvotes:** {N} | **Date:** {date} | **Surface:** {surface}
+**URL:** {postUrl}
+**Status:** pending
+
+#### Original
+> {1-2 sentence plain-text summary of original content}
+
+#### Rewrite
+**New Title:** {new title}
+
+**Current Behavior:**
+- {bullet points}
+
+**Desired Behavior:**
+- {bullet points}
+
+**User Voice:** "{verbatim quote}" — {author name}
+
+#### Meta
+**Tags:** {suggested tags}
+**Duplicates:** {None / duplicate info with links}
+**Context:** {bulleted list of Linear issues, KB findings}
+**Flags:** {none / needs-split / bug-report / needs-pm-input}
+**Suggested action:** {approve / merge / reject / needs-pm-input}
+
+#### HTML Content
+{ready-to-submit HTML for Featurebase update_post}
+```
+
+Progress update after each post: `Prepared {N}/{total}...`
+
+When all posts are prepared, announce:
+
+```
+✅ Prepared {N} posts for review. Ready to go through them?
+```
+
+### 4. Review Posts
+
+#### Batch mode (from prepared state)
+
+Read each pending post from `_state/fb-moderation.md` and present the review card.
+
+**Review card format** (rendered from state — no tool calls needed):
 
 ---
 
@@ -207,7 +238,12 @@ approve / edit / skip / reject / not-mine?
 
 Keep it short. Omit context/duplicates lines entirely if nothing was found — don't show empty fields.
 
-**User chooses per item:**
+#### Single mode (no state)
+
+For a single post, run 3a–3d inline (fetch, context, rewrite, dedup), then present the review card directly. No state file needed.
+
+#### User actions
+
 - **approve** — apply rewrite + tags, clear inReview
 - **edit** — user provides corrections, re-present
 - **merge** — clerk provides canonical link for manual merge in Featurebase UI
@@ -215,14 +251,14 @@ Keep it short. Omit context/duplicates lines entirely if nothing was found — d
 - **reject** — set status per config Status Mapping, clear inReview
 - **not-mine** — wrong team; add to `_state/fb-not-mine.md`, skip
 
-### 4. Commit
+### 5. Commit
 
-Execute the chosen action immediately after user approves. **Each write requires prior approval from Step 3e.**
+Execute the chosen action immediately after user approves. **Each write requires prior approval from Step 4.**
 
 ```
 match action:
     approve →
-        update_post(id, title=new_title, content=new_content, inReview=false, tags=[surface_tag, ...])
+        update_post(id, title=new_title, content=html_content, inReview=false, tags=[surface_tag, ...])
 
     merge →
         Present: "Merge [{dup_title}](dup_link) into [{canonical_title}](canonical_link) in Featurebase UI"
@@ -238,12 +274,12 @@ match action:
     skip →
         (no action)
 
-Update _state/fb-moderation.md with result
+Update post status in _state/fb-moderation.md → approved/rejected/skipped/merged/not-mine
 ```
 
-Then proceed to next post in queue.
+Then present next pending post from state.
 
-### 5. Log & Clean Up
+### 6. Log & Clean Up
 
 ```
 Append to ACTION_LOG.md:
@@ -261,16 +297,18 @@ If interrupted → state persists for recovery
 
 ## Recovery
 
-State persists in `_state/fb-moderation.md`. Re-triggering detects state and resumes from next unprocessed item. State tracks:
+State persists in `_state/fb-moderation.md`. Re-triggering detects state file and checks for:
+
+1. **Unpresented prepared posts** (status: pending) → resume at Step 4 (Review)
+2. **Preparation incomplete** (fewer posts prepared than in queue) → resume at Step 3 from next unprepared post
+3. **All reviewed** → proceed to Step 6 (Log & Clean Up)
+
+State file header tracks overall progress:
 
 ```markdown
-## Queue
-| ID | Title | Surface | Status |
-|----|-------|---------|--------|
-| {id} | {title} | {surface} | pending/approved/skipped/... |
-
-## Current Position
-Processing item {N} of {total}
+## Moderation Batch — {date}
+Queue: {total} posts | Prepared: {N} | Reviewed: {N}
+Phase: preparing / reviewing / complete
 ```
 
 ## API Notes
@@ -287,10 +325,10 @@ Key capabilities the procedure depends on:
 ## Examples
 
 **"moderate this post" + paste URL**
-→ Extract slug, search for post, gather context, rewrite, check duplicates, present for approval, commit.
+→ Extract slug, search for post, gather context, rewrite, check duplicates, present for approval, commit. (Single mode — no state file.)
 
 **"moderate featurebase"**
-→ Fetch inReview posts (~10-30), classify surfaces, filter to My Surfaces, process one at a time with immediate review.
+→ Fetch inReview posts, classify surfaces, filter to My Surfaces. Prepare all posts autonomously (context + rewrite + dedup → state file). Then present prepared cards one by one for rapid review.
 
 **"triage featurebase" after interruption**
-→ Detect `_state/fb-moderation.md`, report progress ("5 of 12 processed"), resume from next unprocessed item.
+→ Detect `_state/fb-moderation.md`. If preparation incomplete, resume preparing. If posts are prepared but unreviewed, jump to review phase. Report progress ("prepared 10, reviewed 5 — resuming review").

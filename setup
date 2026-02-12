@@ -89,6 +89,48 @@ ln -s "$CLERK_PATH/.claude/mcp.json" "$VAULT_PATH/.mcp.json"
 echo "Created: $VAULT_PATH/.mcp.json -> $CLERK_PATH/.claude/mcp.json"
 
 echo ""
+echo "=== Configuring codebases ==="
+
+# Check if codebases section exists in paths.yaml
+if ! grep -q "^codebases:" "$PATHS_FILE"; then
+    echo "No codebases configured yet."
+    echo "Codebases are external code repositories that clerk can explore."
+    echo ""
+    read -p "Add a codebase now? [y/N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo ""
+        echo "codebases:" >> "$PATHS_FILE"
+        while true; do
+            read -p "Codebase name (e.g., myapp): " CB_NAME
+            [ -z "$CB_NAME" ] && break
+            read -p "Codebase path (e.g., ~/code/myapp): " CB_PATH
+            CB_PATH="${CB_PATH/#\~/$HOME}"
+            if [ ! -d "$CB_PATH" ]; then
+                echo "Warning: Path does not exist: $CB_PATH (adding anyway)"
+            fi
+            read -p "Main branch [master]: " CB_BRANCH
+            CB_BRANCH="${CB_BRANCH:-master}"
+            echo "  $CB_NAME:" >> "$PATHS_FILE"
+            echo "    path: $CB_PATH" >> "$PATHS_FILE"
+            echo "    main_branch: $CB_BRANCH" >> "$PATHS_FILE"
+            echo "Added: $CB_NAME ($CB_PATH)"
+            echo ""
+            read -p "Add another? [y/N] " -n 1 -r
+            echo
+            [[ ! $REPLY =~ ^[Yy]$ ]] && break
+        done
+    fi
+else
+    echo "Codebases configured in paths.yaml:"
+    grep -A2 "^  [a-zA-Z]" "$PATHS_FILE" | while read -r line; do
+        if echo "$line" | grep -q "path:"; then
+            echo "  $line"
+        fi
+    done
+fi
+
+echo ""
 echo "=== Setting up tools ==="
 
 # Clone granola-mcp if missing
@@ -160,9 +202,54 @@ SETTINGS_FILE="$CLERK_PATH/.claude/settings.local.json"
 if [ ! -f "$SETTINGS_FILE" ]; then
     cp "$CLERK_PATH/.claude/settings.local.json.example" "$SETTINGS_FILE"
     echo "Created settings.local.json from template."
-    echo "You may want to customize permissions for your workflow."
 else
-    echo "settings.local.json already exists, skipping."
+    echo "settings.local.json already exists."
+fi
+
+# Inject codebase permissions from paths.yaml
+if grep -q "^codebases:" "$PATHS_FILE"; then
+    echo "Syncing codebase permissions..."
+    # Extract codebase paths from paths.yaml
+    CB_PATHS=$(grep "path:" "$PATHS_FILE" | grep -v "vault_path\|clerk_path" | sed 's/.*path: *//' | sed "s|~|$HOME|g")
+
+    # Use Python to safely merge permissions into JSON
+    python3 -c "
+import json, sys
+
+settings_path = sys.argv[1]
+codebase_paths = sys.argv[2:]
+
+with open(settings_path) as f:
+    settings = json.load(f)
+
+allow = settings.setdefault('permissions', {}).setdefault('allow', [])
+added = 0
+
+for cb_path in codebase_paths:
+    marker = f'Read({cb_path}/'
+    if any(marker in p for p in allow):
+        print(f'  {cb_path} — already permitted')
+        continue
+
+    allow.extend([
+        f'Read({cb_path}/**)',
+        f'Grep({cb_path}/**)',
+        f'Glob({cb_path}/**)',
+        f'Bash(git -C {cb_path} *)',
+    ])
+    print(f'  {cb_path} — permissions added (Read, Grep, Glob, git)')
+    added += 1
+
+with open(settings_path, 'w') as f:
+    json.dump(settings, f, indent=2)
+    f.write('\n')
+
+if added:
+    print(f'Added read permissions for {added} codebase(s).')
+    print('These allow the explore-codebase workflow to run without interactive prompts.')
+" "$SETTINGS_FILE" $CB_PATHS
+else
+    echo "No codebases in paths.yaml — skipping codebase permissions."
 fi
 
 echo ""
