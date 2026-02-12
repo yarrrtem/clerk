@@ -125,13 +125,20 @@ Wait for user decision:
 
 ### 4. Draft
 
-Compose the ticket using the template from `_config.md § Linear Tickets`.
+Compose the ticket using the style guide and templates from `_config.md § Linear Tickets`.
 
-**Map research findings to template sections:**
+**Pick the format:**
+- **Structured** (Current Behavior / Desired Behavior / LLM Context) — default for features, improvements, Cursor-delegatable work
+- **Prose** (paragraph + bullet list) — for bugs, incidents, context-heavy tasks where the structured format feels forced
+
+**Map research findings:**
 
 ```
-title: Concise, action-oriented. Format: "{Verb} {feature} {context}"
-description: Render template with research findings
+title: "{Verb} {thing} {context}" — terse, action-oriented
+description: render chosen template per style guide
+  - bullets are one sentence each, no sub-bullets
+  - LLM Context uses file:line references, not paragraphs
+  - no filler headers, no preamble before first heading
 metadata:
   team: config.team
   project: config.default_project (override if brain dump references specific project)
@@ -150,14 +157,14 @@ metadata:
 Team: {team} | Project: {project} | Status: {status} | Priority: {priority}
 {Labels if any} {Related issues if any}
 
-{rendered template — Current Behavior, Desired Behavior, LLM Context}
+{rendered description — terse, per style guide}
 
 ---
 
 Assumptions:
-- {assumption about scope, project placement, priority, etc.}
-- {assumption about current behavior based on research}
-- {assumption about implementation approach}
+- {assumption 1}
+- {assumption 2}
+- {assumption 3}
 
 Questions (optional — answer any, all, or none):
 1. {most clarifying question}
