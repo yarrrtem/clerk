@@ -154,6 +154,14 @@ Generate the rewritten post using the template from `_config.md`:
 - **Desired Behavior** — what the user wants. Extracted from their request, clarified if ambiguous.
 - **User Voice** — verbatim quote from original post. Preserve the customer's words.
 
+**HTML format:** Write compact, single-line HTML — no newlines between tags (Featurebase renders whitespace). Use bare `<strong>` for headings, not `<p>`. Example:
+
+```html
+<strong>Current Behavior</strong><ul><li>First point</li><li>Second point</li></ul>
+<strong>Desired Behavior</strong><ul><li>First point</li><li>Second point</li></ul>
+<strong>User Voice</strong><blockquote><p>"verbatim quote"</p></blockquote>
+```
+
 **Edge cases:**
 - Post too vague → flag as `needs-pm-input`, preserve original
 - Post is a bug report → note this, suggest different handling
