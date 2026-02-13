@@ -1,5 +1,5 @@
 ---
-name: moderate_fb
+name: moderate_featurebase
 description: Moderate Featurebase posts — rewrite, deduplicate, tag, and approve/reject. Supports batch or single post by URL/ID.
 ---
 

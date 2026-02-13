@@ -76,8 +76,9 @@ if "this post" → ask user for URL or ID
 Classify from the lightweight queue (title + snippet only — no full content needed):
 
 ```
-for each {id, title, snippet} in queue:
-    classify title + snippet against config Classification Keywords
+for each {id, title, snippet, tags} in queue:
+    if post has Featurebase tags → use those as surface (tags are manually assigned, trust them)
+    else → classify title + snippet against config Classification Keywords
     if no clear match → "Other"
 
 mine = [p for p in queue if surface IN config "My Surfaces"]
@@ -91,7 +92,11 @@ Present summary:
 
     Process these {M} posts?
 
-On confirmation → write queue to _state/fb-moderation.md
+On confirmation → initialize _state/fb-moderation.md with header only:
+
+    ## Moderation Batch — {date}
+    Queue: {total} posts | Prepared: 0 | Reviewed: 0
+    Phase: preparing
 ```
 
 ### 3. Prepare Posts (autonomous — batch mode)
@@ -100,7 +105,19 @@ In batch mode, prepare all posts autonomously before presenting any for review. 
 
 **Single mode** skips this step — go straight to Step 4 (Process Single Post).
 
-For each post in `mine` (up to 10):
+**CRITICAL:** The state file is the work product. Every post's full research output — context, rewrite, duplicates, HTML — MUST be written to `_state/fb-moderation.md` as each post is prepared. This is what makes recovery possible without redoing work, and what gets archived as a durable reference after the batch completes.
+
+Prepare in batches of **5 posts**, then review those 5 before preparing the next batch. This keeps context manageable and avoids long waits.
+
+```
+while mine has unprepared posts:
+    batch = next 5 unprepared posts from mine
+    for each post in batch: run 3a–3e (fetch, triage, rewrite, dedup, write to state)
+    → proceed to Step 4 (Review) for this batch
+    → after reviewing all 5, loop back here for the next batch
+```
+
+For each post in the current batch, run 3a–3d, then **write the prepared card to the state file** (3e):
 
 #### 3a. Fetch & Gather Context
 
@@ -151,9 +168,9 @@ Generate the rewritten post using the template from `_config.md`:
 4. Canonical = most upvotes, or oldest if tied
 ```
 
-#### 3e. Write to State
+#### 3e. Write Prepared Card to State
 
-After preparing each post, append to `_state/fb-moderation.md`:
+**After preparing each post**, append the full prepared card to `_state/fb-moderation.md` and update the header's `Prepared` count. This is not optional — the state file is the output of preparation.
 
 ```markdown
 ---
@@ -164,37 +181,50 @@ After preparing each post, append to `_state/fb-moderation.md`:
 **Status:** pending
 
 #### Original
-> {1-2 sentence plain-text summary of original content}
+> {exact verbatim text from the Featurebase post, converted to plain text. Do NOT summarize or paraphrase — copy the customer's words as-is.}
 
-#### Rewrite
+#### Research
+
+**Featurebase — related posts:**
+- [{post title}]({postUrl}) — {1-line summary of what it requests and how it relates}. {N} upvotes, status: {status}
+- ...
+- (or: None found)
+
+**Knowledge Base:**
+- [{article title}]({url}) — {1-line summary of relevant info found}
+- ...
+- (or: None found)
+
+**Linear:**
+- [{issue/doc identifier}]({url}) — {1-line summary: what it is, status, how it relates}
+- ...
+- (or: None found)
+
+**Codebase:**
+- `{file_path}` — {1-line summary of what's there and why it's relevant}
+- ...
+- (or: Not searched / None found)
+
+#### Decision
 **New Title:** {new title}
-
-**Current Behavior:**
-- {bullet points}
-
-**Desired Behavior:**
-- {bullet points}
-
-**User Voice:** "{verbatim quote}" — {author name}
-
-#### Meta
 **Tags:** {suggested tags}
-**Duplicates:** {None / duplicate info with links}
-**Context:** {bulleted list of Linear issues, KB findings}
 **Flags:** {none / needs-split / bug-report / needs-pm-input}
 **Suggested action:** {approve / merge / reject / needs-pm-input}
+**Merge candidate:** {None / [{title}]({url}) — {reason}}
 
-#### HTML Content
+#### Rewrite (HTML)
 {ready-to-submit HTML for Featurebase update_post}
 ```
 
 Progress update after each post: `Prepared {N}/{total}...`
 
-When all posts are prepared, announce:
+When the current batch (5 posts) is prepared, update header to `Phase: reviewing` and announce:
 
 ```
-✅ Prepared {N} posts for review. Ready to go through them?
+✅ Prepared {N} posts (batch {B}). Ready to review them?
 ```
+
+After reviewing the batch, if more posts remain, loop back to Step 3 for the next batch of 5.
 
 ### 4. Review Posts
 
@@ -204,31 +234,25 @@ Read each pending post from `_state/fb-moderation.md` and present the review car
 
 **Review card format** (rendered from state — no tool calls needed):
 
+**CRITICAL:** Always include the post URL and the full original content (plain-text, not summarized). The user needs to see exactly what the customer wrote.
+
 ---
 
 {author name} | {N} upvotes | {date} | Surface: {surface}
-{postUrl}
+[{original title}]({postUrl})
 
-### {original title} (original)
-> {1-2 sentence plain-text summary of original content}
+**Original content:**
+{full plain-text content of the post — not summarized, convert HTML to plain text}
 
 ---
 
 ### {new title}
 
-> **Current Behavior:**
-> - {bullet points — what exists today, sourced from KB}
+{render the rewrite HTML as readable plain text for the review card}
 
-> **Desired Behavior:**
-> - {bullet points — what the user wants}
+**Research:** {summarize key findings from state — related posts, KB articles, Linear issues. Include links. Omit sections where nothing was found.}
 
-> **User Voice:** "{verbatim quote}" — {author name}
-
-Tags: {suggested tags}
-Duplicates: {None / Likely duplicate of [{title}]({link}) ({N} upvotes) / Related: [{title}]({link})}
-Context:
-- {bulleted list of relevant Linear issues with links, status, and brief description}
-- {KB findings if any}
+Merge candidate: {None / [{title}]({url}) ({N} upvotes) — {reason}}
 
 Suggested action: {approve / merge / reject / needs-pm-input}
 
@@ -279,7 +303,7 @@ Update post status in _state/fb-moderation.md → approved/rejected/skipped/merg
 
 Then present next pending post from state.
 
-### 6. Log & Clean Up
+### 6. Log & Archive
 
 ```
 Append to ACTION_LOG.md:
@@ -291,17 +315,23 @@ Append to ACTION_LOG.md:
     - Skipped: {N}
     - Not mine: {N}
 
-If batch complete → delete _state/fb-moderation.md
-If interrupted → state persists for recovery
+If batch complete → archive state file:
+    mv _state/fb-moderation.md → _state/fb-moderation-{YYYY-MM-DD}.md
+    Update header: Phase: complete
+If interrupted → state persists as _state/fb-moderation.md for recovery
 ```
+
+The archived state file preserves the full work product for every processed post: context links (Linear issues, KB articles), proposed rewrites, duplicate analysis, flags, and final actions taken. This serves as a durable reference for future moderation sessions and product understanding.
 
 ## Recovery
 
-State persists in `_state/fb-moderation.md`. Re-triggering detects state file and checks for:
+Active state lives in `_state/fb-moderation.md` (no date suffix). Re-triggering detects this file and checks for:
 
 1. **Unpresented prepared posts** (status: pending) → resume at Step 4 (Review)
 2. **Preparation incomplete** (fewer posts prepared than in queue) → resume at Step 3 from next unprepared post
-3. **All reviewed** → proceed to Step 6 (Log & Clean Up)
+3. **All reviewed** → proceed to Step 6 (Log & Archive)
+
+Dated archive files (`_state/fb-moderation-{date}.md`) are ignored by recovery — only the undated file is treated as active.
 
 State file header tracks overall progress:
 
